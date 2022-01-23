@@ -27,6 +27,9 @@ Route::prefix('admin')->group(function(){
     Route::post('/register/create',[AdminController::class, 'AdminRegisterCreate'])->name('admin.register.create');
 
     Route::get('/currency-list', [PbAPIController::class, 'CurrencyList'])->name('pb.currencyList');
+    Route::get('/make-payment', [PbAPIController::class, 'makePayment'])->name('pb.makePayment');
+
+
 
 });
 
