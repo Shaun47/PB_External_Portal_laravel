@@ -1,57 +1,163 @@
 @extends('admin.admin_master')
 @section('admin')
-<div class="container-fluid">
-   <div class="row">
-
-   <div class="card col-md-12">
-   <h5 class="card-header">Balance Info</h5>
-   <div class="card-body">
-      <h5 class="card-title"> <span style="font-weight:bolder;">Balance:</span>  </h5>
-    
-         <h3 class="card-text">430.00 BDT</h3>
-     
-   </div>
-   </div>
-                     <!-- /.col-md-6 -->
-   </div>
-   <!-- /.row -->
-</div>
 
 
 <div class="container">
    <div class="row">
       <div class="col-md-12">
-         <table class="table">
-            <thead>
-               <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Product</th>
-                  <th scope="col">Currency</th>
-                  <th scope="col">Amount</th>
-                  <th scope="col">Invoice</th>
-                  <th scope="col">Transaction ID</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Action</th>
-               </tr>
-            </thead>
-            <tbody>
-               @foreach($orders as $order)
-               <tr @if($order->status == 'Processing') class="table-success" @endif>
-                  <th scope="row"> {{ $order->id }} </th>
-                  <td>{{ $order->product }}</td>
-                  <td>{{ $order->currency }}</td>
-                  <td>{{ $order->amount }}</td>
-                  <td>{{ $order->invoice }}</td>
-                  <td>{{ $order->trxID }}</td>
-                  <td>{{ $order->status }}</td>
-                  <td> <a href="{{ route('orders.show', $order->id) }}" class="btn btn-primary" >View</a> </td>
-               </tr>
-               @endforeach
-            </tbody>
-         </table>
+         <div class="card-body">
+         <form action="" id="recharge" onsubmit="event.preventDefault();">
+         <div class="mb-3 row">
+            <label for="amount" class="col-sm-2 col-form-label">Amount</label>
+            <div class="col-sm-10">
+               <input type="text" class="form-control amount" id="amount">
+            </div>
+         </div>
+         <div class="mb-3 row">
+            <label for="invoice" class="col-sm-2 col-form-label">Invoice No</label>
+            <div class="col-sm-10">
+               <input type="text" class="form-control invoice" id="invoice">
+            </div>
+         </div>
+         
+
+            <button class="btn btn-primary" id="bKash_button">Pay With Bkash</button>
+            </form>
+         </div>
       </div>
    </div>
 </div>
+
+
                <!-- /.container-fluid -->
+
+
+
+               <script src="https://code.jquery.com/jquery-1.8.3.min.js"
+        integrity="sha256-YcbK69I5IXQftf/mYD8WY0/KmEDCv1asggHpJk1trM8=" crossorigin="anonymous"></script>
+
+<script id="myScript"
+        src="https://scripts.sandbox.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout-sandbox.js"></script>
+
+<script>
+    var accessToken = '';
+
+    $(document).ready(function () {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        $.ajax({
+            url: "{!! route('pb.token') !!}",
+            type: 'POST',
+            contentType: 'application/json',
+            success: function (data) {
+                console.log('got data from token  ..');
+                console.log(JSON.stringify(data));
+
+                accessToken = JSON.stringify(data);
+            },
+            error: function () {
+                console.log('error');
+
+            }
+        });
+
+        var paymentConfig = {
+            createCheckoutURL: "{!! route('pb.createpayment') !!}",
+            executeCheckoutURL: "{!! route('pb.executepayment') !!}"
+        };
+
+
+        var paymentRequest;
+        paymentRequest = {amount: $('#amount').val(), intent: 'sale', invoice: $('#invoice').val()};
+        console.log(JSON.stringify(paymentRequest));
+
+        bKash.init({
+            paymentMode: 'checkout',
+            paymentRequest: paymentRequest,
+            createRequest: function (request) {
+                console.log('=> createRequest (request) :: ');
+                console.log(request);
+
+                $.ajax({
+                    url: paymentConfig.createCheckoutURL + "?amount=" + paymentRequest.amount + "&invoice=" + paymentRequest.invoice,
+                    type: 'GET',
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log('got data from create  ..');
+                        console.log('data ::=>');
+                        console.log(JSON.stringify(data));
+
+                        var obj = JSON.parse(data);
+
+                        if (data && obj.paymentID != null) {
+                            paymentID = obj.paymentID;
+                            bKash.create().onSuccess(obj);
+                        }
+                        else {
+                            console.log('error');
+                            bKash.create().onError();
+                        }
+                    },
+                    error: function () {
+                        console.log('error');
+                        bKash.create().onError();
+                    }
+                });
+            },
+
+            executeRequestOnAuthorization: function () {
+                console.log('=> executeRequestOnAuthorization');
+                $.ajax({
+                    url: paymentConfig.executeCheckoutURL + "?paymentID=" + paymentID,
+                    type: 'GET',
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log('got data from execute  ..');
+                        console.log('data ::=>');
+                        console.log(JSON.stringify(data));
+
+                        urls = '{!! route("pb.makePayment", ":amount") !!}';
+                        urls = urls.replace(':amount', paymentRequest.amount);
+
+                        data = JSON.parse(data);
+                        if (data && data.paymentID != null) {
+                            // alert('[SUCCESS] data : ' + JSON.stringify(data));
+                            window.location.href = urls;
+                        } 
+                        else {
+                            bKash.execute().onError();
+                        }
+                    },
+                    error: function () {
+                        bKash.execute().onError();
+                    }
+                });
+            }
+        });
+
+        console.log("Right after init ");
+    });
+
+    function callReconfigure(val) {
+        bKash.reconfigure(val);
+    }
+
+    function clickPayButton() {
+        $("#bKash_button").trigger('click');
+    }
+</script>
+
+<script>
+
+window.addEventListener('load', function(){
+   document.getElementById("recharge").reset()
+
+});
+
+</script>
             
 @endsection
