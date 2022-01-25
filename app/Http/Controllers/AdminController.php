@@ -7,11 +7,14 @@ use Auth;
 use App\Models\Admin;
 use Carbon\Carbon; 
 use App\Http\Controllers\Hash;
+use App\Models\Order;
 
 class AdminController extends Controller 
 {
     public function Dashboard(){
-        return view('admin.index');
+        // echo "asd"; exit;
+        $orders = Order::all();
+        return view('admin.index', compact('orders'));
     }
 
     public function Index(){

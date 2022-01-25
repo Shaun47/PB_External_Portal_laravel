@@ -16,6 +16,8 @@
       <link rel="stylesheet" href=" {{ asset('admin/plugins/fontawesome-free/css/all.min.css') }} ">
       <!-- Theme style -->
       <link rel="stylesheet" href=" {{ asset('admin/dist/css/adminlte.min.css') }} ">
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+      <meta name="csrf-token" content="{{ csrf_token() }}">
    </head>
    <body class="hold-transition sidebar-mini">
       <div class="wrapper">
@@ -196,9 +198,9 @@
                         </a>
                         <ul class="nav nav-treeview">
                            <li class="nav-item">
-                              <a href="{{ route('pb.currencyList') }}" class="nav-link active">
+                              <a href="#" class="nav-link active">
                                  <i class="far fa-circle nav-icon"></i>
-                                 <p>Currency List</p>
+                                 <p>Make Payment</p>
                               </a>
                            </li>
                            <li class="nav-item">
@@ -271,11 +273,13 @@
       <!-- ./wrapper -->
       <!-- REQUIRED SCRIPTS -->
       <!-- jQuery -->
-      <script src=" {{ asset('admin/plugins/jquery/jquery.min.js') }} "></script>
       <!-- Bootstrap 4 -->
       <script src=" {{ asset('admin/plugins/bootstrap/js/bootstrap.bundle.min.js') }} "></script>
       <!-- AdminLTE App -->
       <script src=" {{ asset('admin/dist/js/adminlte.min.js') }} "></script>
+     
+
+       
    </body>
 </html>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Order;
 
 
 class PbAPIController extends Controller
@@ -98,7 +99,7 @@ class PbAPIController extends Controller
     }
 
 
-    public function makePayment(){
+    public function makePayment($amount){
         $session_id = $this->login();
         $api_hostname = '103.251.120.243';
         $verify_hostname = false;
@@ -108,7 +109,7 @@ class PbAPIController extends Controller
         $post_data = array(
             'auth_info' => json_encode(array('session_id' => $session_id)),
             'params' => json_encode( array('action' => 'Manual payment',
-            'amount' => 1,
+            'amount' => $amount,
             'internal_comment' => 'Customer Payment',
             'i_customer' => 1719, ),
         ));
@@ -116,27 +117,30 @@ class PbAPIController extends Controller
         $curl = curl_init();
         curl_setopt_array($curl,
         array(
-            CURLOPT_URL => $api_url .
-            '/Customer/make_transaction',
+            CURLOPT_URL => $api_url . '/Customer/make_transaction',
             CURLOPT_SSL_VERIFYPEER => $verify_hostname,
             CURLOPT_SSL_VERIFYHOST => $verify_hostname,
             CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POSTFIELDS => http_build_query($post_data),
         ) );
 
 
         $reply = curl_exec($curl);
+
+        // return json_decode($reply);
         
         if(! $reply) {
-            echo curl_error($curl);
+            //echo curl_error($curl);
             curl_close($curl);
             exit;
         }
         // return view('admin.index',)
         $data = json_decode($reply);
-        return $data;
+        // return $data->balance;
+        $orders = Order::all();
         
-    
+        return view('admin.index',compact('data','orders'));
 
         // return view('admin.index')->with('data',$data);
         // return $data;
